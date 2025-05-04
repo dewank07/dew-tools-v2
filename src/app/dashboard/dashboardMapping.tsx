@@ -5,6 +5,13 @@ import React from "react";
 // Example: import JsonFormatter from '@/modules/json-formatter';
 // Example: import RegexTester from '@/modules/regex-tester';
 // Example: import TodoList from '@/modules/todo-list';
+import TimeConverter from "@/modules/time-converter";
+import ApiTester from "@/modules/api-tester";
+import UrlShortener from "@/modules/url-shortener";
+import TextComparison from "@/modules/text-comparison";
+import CommitMessageGenerator from "@/modules/commit-message-generator";
+import JsonVisualizer from "@/modules/json-visualizer";
+import RegexBuilder from "@/modules/regex-builder";
 
 // Define the mapping of slugs to components
 interface DashboardComponentMapping {
@@ -17,23 +24,41 @@ interface DashboardComponentMapping {
 
 // Add your components to this mapping
 export const dashboardComponents: DashboardComponentMapping = {
-  // Example mappings:
-  "json-formatter": {
-    component: () => <div>JSON Formatter Component</div>, // Replace with actual component
-    title: "JSON Formatter",
-    description: "Format and validate JSON data",
+  "api-tester": {
+    component: ApiTester,
+    title: "API Tester",
+    description: "Test API endpoints with different HTTP methods",
   },
-  "regex-tester": {
-    component: () => <div>Regex Tester Component</div>, // Replace with actual component
-    title: "Regex Tester",
-    description: "Test and debug regular expressions",
+  "time-converter": {
+    component: TimeConverter,
+    title: "Time Converter",
+    description: "Convert between different time zones and formats",
   },
-  "todo-list": {
-    component: () => <div>Todo List Component</div>, // Replace with actual component
-    title: "Todo List",
-    description: "Manage your tasks and to-dos",
+  "url-shortner": {
+    component: UrlShortener, // Replace with actual component
+    title: "URL Shortner",
+    description: "Shorten long URLs for easier sharing",
   },
-  // Add more tools as needed
+  "text-comparison": {
+    component: TextComparison,
+    title: "Text Comparison",
+    description: "Compare two text blocks and highlight differences",
+  },
+  "commit-message-generator": {
+    component: CommitMessageGenerator,
+    title: "Commit Message Generator",
+    description: "Generate standardized git commit messages",
+  },
+  "json-visualizer": {
+    component: JsonVisualizer,
+    title: "JSON Visualizer",
+    description: "Visualize, format and validate JSON data",
+  },
+  "regex-builder": {
+    component: RegexBuilder,
+    title: "Regex Builder",
+    description: "Build and test regular expressions with live preview",
+  },
 };
 
 // Helper function to get a component by slug
