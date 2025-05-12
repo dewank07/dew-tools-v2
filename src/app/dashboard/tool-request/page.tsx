@@ -75,11 +75,28 @@ export default function ToolRequestPage() {
     setIsSubmitting(true);
 
     try {
-      // Here you would typically send the data to your backend
-      console.log(formData);
+      // Create Google Form submission URL with form data
+      const baseFormUrl =
+        "https://docs.google.com/forms/d/e/1FAIpQLSfEjU66VtjIzmsIHYGPurc4I8v57x8HTFfduRWYBKPXs4OpKg/formResponse";
+      const formParams = new URLSearchParams({
+        "entry.2112223898": formData.name,
+        "entry.1069607905": formData.email,
+        "entry.711946729": formData.requirement,
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Create submission URL
+      const submissionUrl = `${baseFormUrl}?${formParams.toString()}`;
+
+      // Create a hidden image element to make the request
+      const img = document.createElement("img");
+      img.style.display = "none";
+      img.src = submissionUrl;
+      document.body.appendChild(img);
+
+      // Remove the image after a short delay
+      setTimeout(() => {
+        document.body.removeChild(img);
+      }, 1000);
 
       toast.success("Request submitted successfully!", {
         description: "We'll review your tool request and get back to you soon.",
