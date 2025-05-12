@@ -1,8 +1,5 @@
 import {
-  Frame,
   LifeBuoy,
-  Map,
-  PieChart,
   Send,
   Globe,
   Clock,
@@ -68,21 +65,6 @@ export const data = {
   },
 
   projects: [
-    {
-      name: "JSON-Formatter",
-      url: "/dashboard/json-formatter",
-      icon: Frame,
-    },
-    {
-      name: "Regex Tester",
-      url: "/dashboard/regex-tester",
-      icon: PieChart,
-    },
-    {
-      name: "Todo List",
-      url: "/dashboard/todo-list",
-      icon: Map,
-    },
     {
       name: "API Tester",
       url: "/dashboard/api-tester",

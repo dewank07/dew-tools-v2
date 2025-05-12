@@ -66,7 +66,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               {data.userMenu.premium.map((item) => (
-                <DropdownMenuItem key={item.title}>
+                <DropdownMenuItem key={item.title} onClick={() => window.open(item.url, "_blank")}>
                   <item.icon />
                   {item.title}
                 </DropdownMenuItem>
@@ -76,7 +76,7 @@ export function NavUser({
 
             <DropdownMenuGroup>
               {data.userMenu.account.map((item) => (
-                <DropdownMenuItem key={item.title}>
+                <DropdownMenuItem key={item.title} onClick={() => window.open(item.url, "_blank")}>
                   <item.icon />
                   {item.title}
                 </DropdownMenuItem>

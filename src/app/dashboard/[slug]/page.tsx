@@ -3,13 +3,10 @@ import { notFound } from "next/navigation";
 import ToolsLayout from "@/Layout/ToolsLayout";
 import { getComponentBySlug } from "../dashboardMapping";
 
-interface PageProps {
-  params: {
-    slug: string;
-  };
-}
+type Params = Promise<{ slug: string }>;
 
-export default async function Page({ params }: PageProps) {
+// Dynamic page component
+export default async function Page({ params }: { params: Params }) {
   const { slug } = await params;
   const componentData = getComponentBySlug(slug);
 
