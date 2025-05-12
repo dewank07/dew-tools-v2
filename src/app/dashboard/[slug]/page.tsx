@@ -17,12 +17,11 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  const { component: Component, title } = componentData;
+  const { component: Component } = componentData;
 
   return (
     <ToolsLayout>
       <div className='container mx-auto py-6'>
-        <h1 className='text-2xl font-bold mb-6'>{title}</h1>
         <Component />
       </div>
     </ToolsLayout>
