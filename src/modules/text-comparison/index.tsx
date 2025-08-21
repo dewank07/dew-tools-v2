@@ -65,14 +65,14 @@ const TextComparison: React.FC = () => {
           <Button
             variant='outline'
             onClick={() => setDiffView("side-by-side")}
-            className={diffView === "side-by-side" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+            className={diffView === "side-by-side" ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : ""}
           >
             Side by Side
           </Button>
           <Button
             variant='outline'
             onClick={() => setDiffView("inline")}
-            className={diffView === "inline" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+            className={diffView === "inline" ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : ""}
           >
             Inline
           </Button>
