@@ -3,9 +3,10 @@ import { useState } from "react";
 
 interface PaletteProps {
   hex: string;
+  onDelete?: () => void;
 }
 
-export default function Palette({ hex }: PaletteProps) {
+export default function Palette({ hex, onDelete }: PaletteProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -14,7 +15,7 @@ export default function Palette({ hex }: PaletteProps) {
     setIsCopied(true);
     setTimeout(() => {
       setIsCopied(false);
-    }, 2000);
+    }, 1500);
   };
 
   return (
@@ -26,7 +27,10 @@ export default function Palette({ hex }: PaletteProps) {
     >
       <div className="flex items-center justify-end gap-2">
         <PaletteIcon className="size-4 text-white" />
-        <Trash className="size-4 text-white" />
+        <Trash
+          className="size-4 text-white cursor-pointer hover:text-red-200 transition-colors"
+          onClick={onDelete}
+        />
       </div>
       <div className="flex flex-col items-start group">
         <div className="">Hex</div>
