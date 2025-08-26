@@ -26,16 +26,25 @@ export default function PaletteCard({
           Drag the swatches on the image to pick colors
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
-        {colors.map((color, index) => (
-          <Palette
-            key={index}
-            hex={color.replace("#", "")}
-            index={index}
-            onColorChange={onColorChange}
-            onDelete={onDeleteColor}
-          />
-        ))}
+      <CardContent className="flex flex-col gap-2">
+        <div className="space-y-2">
+          {colors.map((color, index) => (
+            <div
+              key={index}
+              className="transition-all duration-300 ease-out"
+              style={{
+                transitionDelay: `${index * 50}ms`,
+              }}
+            >
+              <Palette
+                hex={color.replace("#", "")}
+                index={index}
+                onColorChange={onColorChange}
+                onDelete={onDeleteColor}
+              />
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
