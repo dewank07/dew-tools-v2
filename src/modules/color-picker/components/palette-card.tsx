@@ -11,12 +11,14 @@ interface PaletteCardProps {
   colors: string[];
   onColorChange?: (index: number, newColor: string) => void;
   onDeleteColor?: (index: number) => void;
+  ids?: Array<string | number>;
 }
 
 export default function PaletteCard({
   colors,
   onColorChange,
   onDeleteColor,
+  ids,
 }: PaletteCardProps) {
   return (
     <Card>
@@ -30,7 +32,7 @@ export default function PaletteCard({
         <div className="space-y-2">
           {colors.map((color, index) => (
             <div
-              key={index}
+              key={ids ? ids[index] : index}
               className="transition-all duration-300 ease-out"
               style={{
                 transitionDelay: `${index * 50}ms`,

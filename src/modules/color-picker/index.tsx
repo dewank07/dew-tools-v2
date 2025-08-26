@@ -32,6 +32,8 @@ const ColorPicker = () => {
   const [image, setImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("image");
   const [swatchColors, setSwatchColors] = useState<string[]>(["", "", "", ""]);
+  const [swatchIds, setSwatchIds] = useState<number[]>([0, 1, 2, 3]);
+  const nextSwatchIdRef = useRef<number>(4);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isPickerMode, setIsPickerMode] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -188,6 +190,11 @@ const ColorPicker = () => {
       newColors.splice(index, 1);
       return newColors;
     });
+    setSwatchIds((prev) => {
+      const next = [...prev];
+      next.splice(index, 1);
+      return next;
+    });
   }, []);
 
   const handleImageClick = useCallback(
@@ -218,6 +225,7 @@ const ColorPicker = () => {
       }));
 
       setSwatchColors((prev) => [...prev, ""]);
+      setSwatchIds((prev) => [...prev, nextSwatchIdRef.current++]);
 
       // Exit picker mode after creating swatch
       setIsPickerMode(false);
@@ -289,7 +297,7 @@ const ColorPicker = () => {
                   {/* Draggable Swatches */}
                   {swatchColors.map((color, index) => (
                     <DraggableSwatch
-                      key={index}
+                      key={swatchIds[index]}
                       id={index}
                       initialColor={color}
                       initialPosition={getInitialSwatchPosition(index)}
@@ -456,6 +464,7 @@ const ColorPicker = () => {
               colors={swatchColors}
               onColorChange={handleColorChange}
               onDeleteColor={handleDeletePaletteColor}
+              ids={swatchIds}
             />
           </div>
         )}

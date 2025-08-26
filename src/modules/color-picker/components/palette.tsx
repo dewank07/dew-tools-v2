@@ -27,19 +27,9 @@ export default function Palette({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [tempColor, setTempColor] = useState(`#${hex}`);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const paletteIconRef = useRef<HTMLDivElement>(null);
   const updateTimeoutRef = useRef<number | null>(null);
-
-  // Entry animation on mount - simulates cards being dropped
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, index * 150 + 200); // Staggered animation with initial delay
-
-    return () => clearTimeout(timer);
-  }, [index]);
 
   // Update tempColor when hex prop changes (only if not currently showing color picker)
   useEffect(() => {
@@ -163,7 +153,7 @@ export default function Palette({
       if (onDelete) {
         onDelete(index);
       }
-    }, 300); // Match the CSS transition duration
+    }, 200); // Match the CSS transition duration (200ms)
   };
 
   const openColorPicker = useCallback(() => {
@@ -173,24 +163,9 @@ export default function Palette({
 
   return (
     <div
-      className={`relative w-full min-h-28 p-3 rounded-md shadow-lg hover:shadow-xl cursor-pointer ${
-        // Only apply transform when color picker is not open
-        !showColorPicker ? "transform" : ""
-      } ${
-        isVisible && !showColorPicker
-          ? "translate-y-0 opacity-100 scale-100 rotate-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-          : !showColorPicker
-          ? "translate-y-[-20px] opacity-0 scale-95 rotate-1 transition-all duration-500"
-          : "opacity-100" // Just show normally when color picker is open
-      } ${
-        isDeleting
-          ? "transform translate-x-full opacity-0 scale-75 rotate-12 transition-all duration-300 ease-in"
-          : ""
-      } ${
-        !isDeleting && isVisible && !showColorPicker
-          ? "hover:scale-[1.02] hover:transition-all hover:duration-200"
-          : ""
-      }`}
+      className={`relative w-full min-h-28 p-3 rounded-md shadow-lg hover:shadow-xl cursor-pointer transition-[opacity,transform] duration-350 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${
+        isDeleting ? "opacity-0 translate-x-3 scale-95" : "opacity-100"
+      } ${showColorPicker ? "z-[100]" : ""}`}
       style={{ backgroundColor: `#${hex}` }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -207,7 +182,7 @@ export default function Palette({
           {showColorPicker && (
             <div
               ref={colorPickerRef}
-              className="absolute z-50 top-0 right-full mr-2"
+              className="absolute z-[200] top-0 right-full mr-2"
             >
               <div className="bg-white p-4 rounded-xl shadow-2xl border border-gray-100">
                 <div className="flex justify-between items-center mb-3">
