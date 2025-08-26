@@ -7,42 +7,23 @@ import {
 } from "@/components/ui/card";
 import Palette from "./palette";
 
-interface Swatch {
-  id: string;
-  x: number;
-  y: number;
-  hex: string;
-}
-
 interface PaletteCardProps {
-  swatches: Swatch[];
-  onDeleteSwatch?: (swatchId: string) => void;
+  colors: string[];
 }
 
-export default function PaletteCard({
-  swatches,
-  onDeleteSwatch,
-}: PaletteCardProps) {
+export default function PaletteCard({ colors }: PaletteCardProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Palette</CardTitle>
-        <CardDescription>Palette for the image</CardDescription>
+        <CardDescription>
+          Drag the swatches on the image to pick colors
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        {swatches.length > 0 ? (
-          swatches.map((swatch) => (
-            <Palette
-              key={swatch.id}
-              hex={swatch.hex}
-              onDelete={() => onDeleteSwatch?.(swatch.id)}
-            />
-          ))
-        ) : (
-          <div className="text-gray-500 text-center py-4">
-            Click on the image to add color swatches
-          </div>
-        )}
+        {colors.map((color, index) => (
+          <Palette key={index} hex={color.replace("#", "")} />
+        ))}
       </CardContent>
     </Card>
   );
