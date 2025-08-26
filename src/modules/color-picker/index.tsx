@@ -16,7 +16,6 @@ import {
   RotateCcw,
   ImageIcon,
   FileImage,
-  MousePointer,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,7 +32,6 @@ const ColorPicker = () => {
   const [image, setImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("image");
   const [swatchColors, setSwatchColors] = useState<string[]>(["", "", "", ""]);
-  const [isDragging, setIsDragging] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isPickerMode, setIsPickerMode] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -299,12 +297,8 @@ const ColorPicker = () => {
                       imageRef={imageRef}
                       containerRef={containerRef}
                       imageLoaded={imageLoaded}
-                      onDragStart={() => {
-                        setIsDragging(true);
-                      }}
-                      onDragEnd={() => {
-                        setIsDragging(false);
-                      }}
+                      onDragStart={() => {}}
+                      onDragEnd={() => {}}
                     />
                   ))}
                 </div>

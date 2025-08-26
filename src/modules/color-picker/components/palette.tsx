@@ -1,5 +1,6 @@
 import { Copy, Palette as PaletteIcon, Check, Trash, X } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
+import Color from "color";
 import {
   ColorPicker,
   ColorPickerSelection,
@@ -135,32 +136,23 @@ export default function Palette({
   );
 
   const handleColorPickerRGBAChange = useCallback(
-    (rgba: any) => {
-      if (Array.isArray(rgba) && rgba.length >= 3) {
-        // Convert RGBA array to hex
-        const [r, g, b] = rgba;
+    (value: Parameters<typeof Color.rgb>[0]) => {
+      // If an array (rgba), convert to hex; if string-like, pass through
+      if (Array.isArray(value) && value.length >= 3) {
+        const [r, g, b] = value as number[];
         const hex = `#${Math.round(r)
           .toString(16)
           .padStart(2, "0")}${Math.round(g)
           .toString(16)
           .padStart(2, "0")}${Math.round(b).toString(16).padStart(2, "0")}`;
         handleColorPickerChange(hex);
+        return;
+      }
+      if (typeof value === "string") {
+        handleColorPickerChange(value);
       }
     },
     [handleColorPickerChange]
-  );
-
-  const handleTextInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newColor = e.target.value;
-      setTempColor(newColor);
-
-      // Only update if it's a valid hex color
-      if (/^#[0-9A-F]{6}$/i.test(newColor)) {
-        instantColorUpdate(newColor);
-      }
-    },
-    [instantColorUpdate]
   );
 
   const handleDelete = () => {

@@ -278,6 +278,8 @@ export default function DraggableSwatch({
     initialPosition,
     updateColor,
     renderCanvasOnce,
+    imageRef,
+    containerRef,
   ]);
 
   // Reset initialization when imageLoaded changes

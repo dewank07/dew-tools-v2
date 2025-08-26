@@ -53,7 +53,10 @@ export const useColorPicker = () => {
   return context;
 };
 
-export type ColorPickerProps = HTMLAttributes<HTMLDivElement> & {
+export type ColorPickerProps = Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "onChange"
+> & {
   value?: Parameters<typeof Color>[0];
   defaultValue?: Parameters<typeof Color>[0];
   onChange?: (value: Parameters<typeof Color.rgb>[0]) => void;
@@ -329,7 +332,10 @@ export const ColorPickerOutput = ({
 
   return (
     <Select onValueChange={setMode} value={mode}>
-      <SelectTrigger className="h-8 w-20 shrink-0 text-xs" {...props}>
+      <SelectTrigger
+        className={cn("h-8 w-20 shrink-0 text-xs", className)}
+        {...props}
+      >
         <SelectValue placeholder="Mode" />
       </SelectTrigger>
       <SelectContent>
