@@ -9,9 +9,15 @@ import Palette from "./palette";
 
 interface PaletteCardProps {
   colors: string[];
+  onColorChange?: (index: number, newColor: string) => void;
+  onDeleteColor?: (index: number) => void;
 }
 
-export default function PaletteCard({ colors }: PaletteCardProps) {
+export default function PaletteCard({
+  colors,
+  onColorChange,
+  onDeleteColor,
+}: PaletteCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -22,7 +28,13 @@ export default function PaletteCard({ colors }: PaletteCardProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {colors.map((color, index) => (
-          <Palette key={index} hex={color.replace("#", "")} />
+          <Palette
+            key={index}
+            hex={color.replace("#", "")}
+            index={index}
+            onColorChange={onColorChange}
+            onDelete={onDeleteColor}
+          />
         ))}
       </CardContent>
     </Card>

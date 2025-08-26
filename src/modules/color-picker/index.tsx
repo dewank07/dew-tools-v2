@@ -24,12 +24,7 @@ import ZoomPicker from "./components/ZoomPicker";
 const ColorPicker = () => {
   const [image, setImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("image");
-  const [swatchColors, setSwatchColors] = useState<string[]>([
-    "",
-    "",
-    "",
-    "",
-  ]);
+  const [swatchColors, setSwatchColors] = useState<string[]>(["", "", "", ""]);
   const [_isDragging, setIsDragging] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [zoomPicker, setZoomPicker] = useState({
@@ -64,6 +59,25 @@ const ColorPicker = () => {
     setSwatchColors((prev) => {
       const newColors = [...prev];
       newColors[id] = color;
+      return newColors;
+    });
+  }, []);
+
+  const handlePaletteColorChange = useCallback(
+    (index: number, newColor: string) => {
+      setSwatchColors((prev) => {
+        const newColors = [...prev];
+        newColors[index] = newColor;
+        return newColors;
+      });
+    },
+    []
+  );
+
+  const handleDeletePaletteColor = useCallback((index: number) => {
+    setSwatchColors((prev) => {
+      const newColors = [...prev];
+      newColors.splice(index, 1);
       return newColors;
     });
   }, []);
@@ -225,7 +239,13 @@ const ColorPicker = () => {
             )}
           </CardContent>
         </Card>
-        {image && <PaletteCard colors={swatchColors} />}
+        {image && (
+          <PaletteCard
+            colors={swatchColors}
+            onColorChange={handlePaletteColorChange}
+            onDeleteColor={handleDeletePaletteColor}
+          />
+        )}
       </div>
     </div>
   );
