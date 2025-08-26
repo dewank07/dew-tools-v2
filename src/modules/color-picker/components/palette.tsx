@@ -122,7 +122,7 @@ export default function Palette({
         if (onColorChange) {
           onColorChange(index, newColor);
         }
-      }) as any;
+      });
     },
     [index, onColorChange]
   );
