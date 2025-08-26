@@ -264,7 +264,7 @@ const ColorPicker = () => {
       <h1 className="text-2xl font-bold">Color Picker</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-sidebar">
+        <Card className=" w-full mx-auto">
           <CardHeader>
             <CardTitle>Color Picker</CardTitle>
             <CardDescription>Pick a color and get the hex code</CardDescription>
@@ -283,7 +283,7 @@ const ColorPicker = () => {
                     ref={imageRef}
                     src={image}
                     alt="Uploaded image"
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-[90%] object-contain"
                     onLoad={handleImageLoad}
                     draggable={false}
                   />
@@ -419,7 +419,7 @@ const ColorPicker = () => {
                     size="lg"
                   >
                     <Upload className="size-4 mr-2" />
-                    Choose
+                    Choose Image
                   </Button>
 
                   {/* Alternative Methods */}
