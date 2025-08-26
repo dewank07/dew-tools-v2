@@ -26,7 +26,7 @@ export default function PaletteCard({
           Drag the swatches on the image to pick colors
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
         {colors.map((color, index) => (
           <Palette
             key={index}

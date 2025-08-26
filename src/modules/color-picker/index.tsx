@@ -141,7 +141,7 @@ const ColorPicker = () => {
       <h1 className="text-2xl font-bold">Color Picker</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        <Card>
+        <Card className="bg-sidebar">
           <CardHeader>
             <CardTitle>Color Picker</CardTitle>
             <CardDescription>Pick a color and get the hex code</CardDescription>
@@ -195,12 +195,12 @@ const ColorPicker = () => {
                     }
                   }}
                 >
-                  <TabsList className="grid w-fit grid-cols-3 px-5 gap-3 mx-auto">
+                  <TabsList className="grid w-fit grid-cols-3 px-5 gap-3 mx-auto bg-white shadow-lg rounded-lg justify-end">
                     <TabsTrigger value="image">
-                      <Image className="size-4" />
+                      <Image className="size-5" />
                     </TabsTrigger>
                     <TabsTrigger value="picker">
-                      <Palette className="size-4" />
+                      <Palette className="size-5" />
                     </TabsTrigger>
                     <DropdownMenu
                       onOpenChange={(open) => {
@@ -212,7 +212,7 @@ const ColorPicker = () => {
                           value="reset"
                           onMouseDown={() => setActiveTab("reset")}
                         >
-                          <RotateCcw className="size-4" />
+                          <RotateCcw className="size-5" />
                         </TabsTrigger>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-56">

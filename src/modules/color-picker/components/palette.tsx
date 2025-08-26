@@ -198,7 +198,7 @@ export default function Palette({
 
   return (
     <div
-      className="w-full h-28 p-3 rounded-md"
+      className="w-full min-h-28 p-3 rounded-md"
       style={{ backgroundColor: `#${hex}` }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
