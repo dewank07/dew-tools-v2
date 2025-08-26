@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { Palette, Trash, Upload } from "lucide-react";
+import { Image, Palette, Trash, Upload, RotateCcw } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -26,6 +26,10 @@ const ColorPicker = () => {
   const [swatchColors, setSwatchColors] = useState<string[]>(["", "", "", ""]);
   const [isDragging, setIsDragging] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isPickerMode, setIsPickerMode] = useState(false);
+  const [customSwatchPositions, setCustomSwatchPositions] = useState<{
+    [key: number]: { x: number; y: number };
+  }>({});
 
   const imageRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -65,13 +69,72 @@ const ColorPicker = () => {
     });
   }, []);
 
-  // Use simple initial positions - the swatches will self-position when image loads
-  const initialSwatchPositions = [
-    { x: 20, y: 20 },
-    { x: 80, y: 20 },
-    { x: 20, y: 80 },
-    { x: 80, y: 80 },
-  ];
+  const handleImageClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isPickerMode || !containerRef.current || !imageRef.current) return;
+
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const clickX = e.clientX - containerRect.left;
+      const clickY = e.clientY - containerRect.top;
+
+      // Ensure click is within image bounds
+      if (
+        clickX < 0 ||
+        clickY < 0 ||
+        clickX > containerRect.width ||
+        clickY > containerRect.height
+      ) {
+        return;
+      }
+
+      // Create new swatch at click position
+      const newSwatchIndex = swatchColors.length;
+
+      // Store the click position for the new swatch (offset by half swatch size for centering)
+      setCustomSwatchPositions((prev) => ({
+        ...prev,
+        [newSwatchIndex]: { x: clickX - 12, y: clickY - 12 },
+      }));
+
+      setSwatchColors((prev) => [...prev, ""]);
+
+      // Exit picker mode after creating swatch
+      setIsPickerMode(false);
+      setActiveTab("image");
+    },
+    [isPickerMode, swatchColors.length]
+  );
+
+  // Generate initial positions for swatches
+  const getInitialSwatchPosition = useCallback(
+    (index: number) => {
+      // If there's a custom position for this swatch (from clicking), use it
+      if (customSwatchPositions[index]) {
+        return customSwatchPositions[index];
+      }
+
+      // For the first 4 swatches, use predetermined positions
+      const basePositions = [
+        { x: 20, y: 20 },
+        { x: 80, y: 20 },
+        { x: 20, y: 80 },
+        { x: 80, y: 80 },
+      ];
+
+      if (index < basePositions.length) {
+        return basePositions[index];
+      }
+
+      // For additional swatches, generate positions in a grid pattern
+      const row = Math.floor((index - 4) / 4);
+      const col = (index - 4) % 4;
+      return {
+        x: 20 + col * 60,
+        y: 120 + row * 60,
+      };
+    },
+    [customSwatchPositions]
+  );
 
   return (
     <div className="container p-4 space-y-6">
@@ -86,7 +149,13 @@ const ColorPicker = () => {
           <CardContent>
             {image ? (
               <>
-                <div ref={containerRef} className="relative mb-5">
+                <div
+                  ref={containerRef}
+                  className={`relative mb-5 ${
+                    isPickerMode ? "cursor-crosshair" : ""
+                  }`}
+                  onClick={handleImageClick}
+                >
                   <img
                     ref={imageRef}
                     src={image}
@@ -101,7 +170,7 @@ const ColorPicker = () => {
                       key={index}
                       id={index}
                       initialColor={color}
-                      initialPosition={initialSwatchPositions[index]}
+                      initialPosition={getInitialSwatchPosition(index)}
                       onColorChange={handleColorChange}
                       imageRef={imageRef}
                       containerRef={containerRef}
@@ -115,10 +184,24 @@ const ColorPicker = () => {
                     />
                   ))}
                 </div>
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="image">Image</TabsTrigger>
-                    <TabsTrigger value="picker">Picker</TabsTrigger>
+                <Tabs
+                  value={activeTab}
+                  onValueChange={(value) => {
+                    setActiveTab(value);
+                    if (value === "picker") {
+                      setIsPickerMode(true);
+                    } else {
+                      setIsPickerMode(false);
+                    }
+                  }}
+                >
+                  <TabsList className="grid w-fit grid-cols-3 px-5 gap-3 mx-auto">
+                    <TabsTrigger value="image">
+                      <Image className="size-4" />
+                    </TabsTrigger>
+                    <TabsTrigger value="picker">
+                      <Palette className="size-4" />
+                    </TabsTrigger>
                     <DropdownMenu
                       onOpenChange={(open) => {
                         if (open) setActiveTab("reset");
@@ -129,7 +212,7 @@ const ColorPicker = () => {
                           value="reset"
                           onMouseDown={() => setActiveTab("reset")}
                         >
-                          Reset
+                          <RotateCcw className="size-4" />
                         </TabsTrigger>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-56">

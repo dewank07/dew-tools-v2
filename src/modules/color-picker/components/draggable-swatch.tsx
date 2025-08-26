@@ -32,32 +32,101 @@ export default function DraggableSwatch({
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+  const zoomUpdateRef = useRef<number | null>(null);
+  const colorUpdateRef = useRef<number | null>(null);
+  const lastUpdateTimeRef = useRef<number>(0);
+  const lastColorUpdateTimeRef = useRef<number>(0);
+  const cachedImagePropsRef = useRef<{
+    src: string;
+    width: number;
+    height: number;
+    scaleX: number;
+    scaleY: number;
+  } | null>(null);
+  const canvasRenderedRef = useRef<boolean>(false);
+
+  // Throttling constants for smooth performance
+  const ZOOM_UPDATE_INTERVAL = 16; // ~60fps max
+  const COLOR_UPDATE_INTERVAL = 32; // ~30fps max for color updates
+
+  // Pre-render canvas once for performance
+  const renderCanvasOnce = useCallback(() => {
+    if (!imageRef.current || !canvasRef.current || canvasRenderedRef.current)
+      return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Set canvas dimensions to match image natural size
+    canvas.width = imageRef.current.naturalWidth;
+    canvas.height = imageRef.current.naturalHeight;
+
+    // Draw image to canvas once
+    ctx.drawImage(imageRef.current, 0, 0);
+
+    canvasRenderedRef.current = true;
+  }, [imageRef]);
+
+  // Cache image properties for performance
+  const getCachedImageProps = useCallback(() => {
+    if (!imageRef.current) return null;
+
+    const currentSrc = imageRef.current.src;
+    const currentWidth = imageRef.current.offsetWidth;
+    const currentHeight = imageRef.current.offsetHeight;
+
+    // Return cached props if they match current image
+    if (
+      cachedImagePropsRef.current &&
+      cachedImagePropsRef.current.src === currentSrc &&
+      cachedImagePropsRef.current.width === currentWidth &&
+      cachedImagePropsRef.current.height === currentHeight
+    ) {
+      return cachedImagePropsRef.current;
+    }
+
+    // Calculate and cache new props
+    const scaleX = imageRef.current.naturalWidth / currentWidth;
+    const scaleY = imageRef.current.naturalHeight / currentHeight;
+
+    cachedImagePropsRef.current = {
+      src: currentSrc,
+      width: currentWidth,
+      height: currentHeight,
+      scaleX,
+      scaleY,
+    };
+
+    return cachedImagePropsRef.current;
+  }, [imageRef]);
 
   const getColorAtPosition = useCallback(
     (x: number, y: number): string => {
-      if (!imageRef.current || !canvasRef.current) return color;
+      if (!canvasRef.current || !canvasRenderedRef.current) return color;
 
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       if (!ctx) return color;
 
-      // Set canvas dimensions to match image natural size
-      canvas.width = imageRef.current.naturalWidth;
-      canvas.height = imageRef.current.naturalHeight;
+      // Use cached scale values
+      const imageProps = getCachedImageProps();
+      if (!imageProps) return color;
 
-      // Draw image to canvas
-      ctx.drawImage(imageRef.current, 0, 0);
+      const pixelX = Math.floor(x * imageProps.scaleX);
+      const pixelY = Math.floor(y * imageProps.scaleY);
 
-      // Calculate actual pixel position
-      const scaleX =
-        imageRef.current.naturalWidth / imageRef.current.offsetWidth;
-      const scaleY =
-        imageRef.current.naturalHeight / imageRef.current.offsetHeight;
+      // Ensure coordinates are within canvas bounds
+      if (
+        pixelX < 0 ||
+        pixelY < 0 ||
+        pixelX >= canvas.width ||
+        pixelY >= canvas.height
+      ) {
+        return color;
+      }
 
-      const pixelX = Math.floor(x * scaleX);
-      const pixelY = Math.floor(y * scaleY);
-
-      // Get pixel data
+      // Get pixel data from pre-rendered canvas
       const imageData = ctx.getImageData(pixelX, pixelY, 1, 1);
       const pixel = imageData.data;
 
@@ -68,14 +137,32 @@ export default function DraggableSwatch({
 
       return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
     },
-    [imageRef, color]
+    [color, getCachedImageProps]
   );
 
   const updateColor = useCallback(
-    (x: number, y: number) => {
-      const newColor = getColorAtPosition(x, y);
-      setColor(newColor);
-      onColorChange(id, newColor);
+    (x: number, y: number, forceUpdate = false) => {
+      const now = Date.now();
+
+      // Skip update if too soon since last update (unless forced)
+      if (
+        !forceUpdate &&
+        now - lastColorUpdateTimeRef.current < COLOR_UPDATE_INTERVAL
+      ) {
+        return;
+      }
+
+      // Cancel previous color update to throttle
+      if (colorUpdateRef.current) {
+        cancelAnimationFrame(colorUpdateRef.current);
+      }
+
+      colorUpdateRef.current = requestAnimationFrame(() => {
+        const newColor = getColorAtPosition(x, y);
+        setColor(newColor);
+        onColorChange(id, newColor);
+        lastColorUpdateTimeRef.current = now;
+      });
     },
     [getColorAtPosition, id, onColorChange]
   );
@@ -84,26 +171,52 @@ export default function DraggableSwatch({
     (x: number, y: number) => {
       if (!imageRef.current || !zoomRef.current) return;
 
-      // Use requestAnimationFrame for smooth updates
-      requestAnimationFrame(() => {
+      const now = Date.now();
+
+      // Skip update if too soon since last update
+      if (now - lastUpdateTimeRef.current < ZOOM_UPDATE_INTERVAL) {
+        return;
+      }
+
+      // Cancel previous animation frame to avoid stacking
+      if (zoomUpdateRef.current) {
+        cancelAnimationFrame(zoomUpdateRef.current);
+      }
+
+      // Use requestAnimationFrame for smooth, throttled updates
+      zoomUpdateRef.current = requestAnimationFrame(() => {
         if (!imageRef.current || !zoomRef.current) return;
 
-        const zoomScale = 8;
-        const zoomRadius = 75;
+        const imageProps = getCachedImageProps();
+        if (!imageProps) return;
 
-        // Create zoom effect by setting background
+        const zoomRadius = 75;
         const zoomElement = zoomRef.current;
-        zoomElement.style.backgroundImage = `url(${imageRef.current.src})`;
-        zoomElement.style.backgroundSize = `${
-          imageRef.current.offsetWidth * zoomScale
-        }px ${imageRef.current.offsetHeight * zoomScale}px`;
-        zoomElement.style.backgroundPosition = `${
-          -x * zoomScale + zoomRadius
-        }px ${-y * zoomScale + zoomRadius}px`;
-        zoomElement.style.backgroundRepeat = "no-repeat";
+
+        // Set up zoom background using original image for quality
+        const currentBgImage = zoomElement.style.backgroundImage;
+        const newBgImage = `url(${imageProps.src})`;
+        if (currentBgImage !== newBgImage) {
+          zoomElement.style.backgroundImage = newBgImage;
+          zoomElement.style.backgroundRepeat = "no-repeat";
+        }
+
+        // Update zoom background size and position for zoom effect
+        const zoomScale = 6; // Balanced zoom scale for good quality and performance
+        const bgSize = `${imageProps.width * zoomScale}px ${
+          imageProps.height * zoomScale
+        }px`;
+        zoomElement.style.backgroundSize = bgSize;
+
+        // Update background position for zoom effect
+        const bgPosX = -x * zoomScale + zoomRadius;
+        const bgPosY = -y * zoomScale + zoomRadius;
+        zoomElement.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
+
+        lastUpdateTimeRef.current = now;
       });
     },
-    [imageRef]
+    [imageRef, getCachedImageProps]
   );
 
   // Initialize swatch position and color when image loads
@@ -128,30 +241,67 @@ export default function DraggableSwatch({
             { x: 0.8, y: 0.8 },
           ];
 
+          // Use the current position from initialPosition (which includes custom positions)
           const properPosition = {
-            x: containerRect.width * positions[id].x,
-            y: containerRect.height * positions[id].y,
+            x: initialPosition.x,
+            y: initialPosition.y,
           };
+
+          // If this is one of the first 4 swatches and no custom position, use percentage-based positioning
+          if (
+            id < positions.length &&
+            initialPosition.x <= 100 &&
+            initialPosition.y <= 100
+          ) {
+            properPosition.x = containerRect.width * positions[id].x;
+            properPosition.y = containerRect.height * positions[id].y;
+          }
 
           setPosition(properPosition);
 
+          // Render canvas once when image is ready
+          renderCanvasOnce();
+
           // Extract color from this position
           setTimeout(() => {
-            updateColor(properPosition.x + 12, properPosition.y + 12);
+            updateColor(properPosition.x + 12, properPosition.y + 12, true); // Force initial update
           }, 50); // Small delay to ensure color extraction works
 
           setIsInitialized(true);
         }
       }, 50); // Small delay to ensure container dimensions are set
     }
-  }, [imageLoaded, isInitialized, id, updateColor]);
+  }, [
+    imageLoaded,
+    isInitialized,
+    id,
+    initialPosition,
+    updateColor,
+    renderCanvasOnce,
+  ]);
 
   // Reset initialization when imageLoaded changes
   useEffect(() => {
     if (!imageLoaded) {
       setIsInitialized(false);
+      // Clear cached props when image changes
+      cachedImagePropsRef.current = null;
+      // Reset canvas rendered flag
+      canvasRenderedRef.current = false;
     }
   }, [imageLoaded]);
+
+  // Cleanup animation frames on unmount
+  useEffect(() => {
+    return () => {
+      if (zoomUpdateRef.current) {
+        cancelAnimationFrame(zoomUpdateRef.current);
+      }
+      if (colorUpdateRef.current) {
+        cancelAnimationFrame(colorUpdateRef.current);
+      }
+    };
+  }, []);
 
   // Remove this useEffect to prevent infinite loops
   // The zoom effect will be initialized in handleMouseDown instead
@@ -208,9 +358,17 @@ export default function DraggableSwatch({
       };
 
       const handleMouseUp = () => {
-        // Clean up animation frame
+        // Clean up animation frames
         if (animationId) {
           cancelAnimationFrame(animationId);
+        }
+        if (zoomUpdateRef.current) {
+          cancelAnimationFrame(zoomUpdateRef.current);
+          zoomUpdateRef.current = null;
+        }
+        if (colorUpdateRef.current) {
+          cancelAnimationFrame(colorUpdateRef.current);
+          colorUpdateRef.current = null;
         }
 
         setIsDragging(false);
@@ -237,7 +395,6 @@ export default function DraggableSwatch({
       {isDragging ? (
         // Zoom picker mode when dragging
         <div
-          ref={zoomRef}
           className="absolute w-36 h-36 border-4 border-white rounded-full pointer-events-none z-20 overflow-hidden"
           style={{
             left: `${position.x - 60}px`, // Center the zoom picker on the swatch position
@@ -245,6 +402,14 @@ export default function DraggableSwatch({
             boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
           }}
         >
+          {/* Zoom background container */}
+          <div
+            ref={zoomRef}
+            className="absolute inset-0"
+            style={{
+              willChange: "background-position", // Optimize for background-position changes
+            }}
+          />
           {/* Crosshair */}
           <div
             className="absolute border-2 border-white rounded-sm"
