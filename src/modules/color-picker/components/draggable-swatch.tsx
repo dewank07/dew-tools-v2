@@ -10,8 +10,7 @@ interface DraggableSwatchProps {
   imageRef: React.RefObject<HTMLImageElement | null>;
   containerRef: React.RefObject<HTMLDivElement | null>;
   imageLoaded: boolean;
-  onDragStart?: (position: { x: number; y: number }) => void;
-  onDrag?: (position: { x: number; y: number }) => void;
+  onDragStart?: () => void;
   onDragEnd?: () => void;
 }
 
@@ -24,15 +23,15 @@ export default function DraggableSwatch({
   containerRef,
   imageLoaded,
   onDragStart,
-  onDrag,
   onDragEnd,
 }: DraggableSwatchProps) {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [color, setColor] = useState(initialColor);
   const [isInitialized, setIsInitialized] = useState(false);
-  const swatchRef = useRef<HTMLDivElement>(null);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const zoomRef = useRef<HTMLDivElement>(null);
 
   const getColorAtPosition = useCallback(
     (x: number, y: number): string => {
@@ -79,6 +78,32 @@ export default function DraggableSwatch({
       onColorChange(id, newColor);
     },
     [getColorAtPosition, id, onColorChange]
+  );
+
+  const updateZoomEffect = useCallback(
+    (x: number, y: number) => {
+      if (!imageRef.current || !zoomRef.current) return;
+
+      // Use requestAnimationFrame for smooth updates
+      requestAnimationFrame(() => {
+        if (!imageRef.current || !zoomRef.current) return;
+
+        const zoomScale = 8;
+        const zoomRadius = 75;
+
+        // Create zoom effect by setting background
+        const zoomElement = zoomRef.current;
+        zoomElement.style.backgroundImage = `url(${imageRef.current.src})`;
+        zoomElement.style.backgroundSize = `${
+          imageRef.current.offsetWidth * zoomScale
+        }px ${imageRef.current.offsetHeight * zoomScale}px`;
+        zoomElement.style.backgroundPosition = `${
+          -x * zoomScale + zoomRadius
+        }px ${-y * zoomScale + zoomRadius}px`;
+        zoomElement.style.backgroundRepeat = "no-repeat";
+      });
+    },
+    [imageRef]
   );
 
   // Initialize swatch position and color when image loads
@@ -128,6 +153,9 @@ export default function DraggableSwatch({
     }
   }, [imageLoaded]);
 
+  // Remove this useEffect to prevent infinite loops
+  // The zoom effect will be initialized in handleMouseDown instead
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -141,33 +169,50 @@ export default function DraggableSwatch({
       const startLeft = position.x;
       const startTop = position.y;
 
+      // Initialize zoom effect for current position
+      updateZoomEffect(position.x + 12, position.y + 12);
+
       // Notify parent of drag start
-      onDragStart?.(position);
+      onDragStart?.();
+
+      let animationId: number | null = null;
 
       const handleMouseMove = (e: MouseEvent) => {
         if (!containerRect) return;
 
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
+        // Cancel previous animation frame to throttle updates
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
 
-        let newLeft = startLeft + deltaX;
-        let newTop = startTop + deltaY;
+        animationId = requestAnimationFrame(() => {
+          const deltaX = e.clientX - startX;
+          const deltaY = e.clientY - startY;
 
-        // Keep swatch within image bounds (24px is swatch size)
-        newLeft = Math.max(0, Math.min(newLeft, containerRect.width - 24));
-        newTop = Math.max(0, Math.min(newTop, containerRect.height - 24));
+          let newLeft = startLeft + deltaX;
+          let newTop = startTop + deltaY;
 
-        const newPosition = { x: newLeft, y: newTop };
-        setPosition(newPosition);
+          // Keep swatch within image bounds (24px is swatch size)
+          newLeft = Math.max(0, Math.min(newLeft, containerRect.width - 24));
+          newTop = Math.max(0, Math.min(newTop, containerRect.height - 24));
 
-        // Update color at new position (center of swatch)
-        updateColor(newLeft + 12, newTop + 12);
+          const newPosition = { x: newLeft, y: newTop };
+          setPosition(newPosition);
 
-        // Notify parent of drag position for zoom picker
-        onDrag?.(newPosition);
+          // Update color at new position (center of swatch)
+          updateColor(newLeft + 12, newTop + 12);
+
+          // Update zoom effect
+          updateZoomEffect(newLeft + 12, newTop + 12);
+        });
       };
 
       const handleMouseUp = () => {
+        // Clean up animation frame
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+
         setIsDragging(false);
         onDragEnd?.();
         document.removeEventListener("mousemove", handleMouseMove);
@@ -177,24 +222,56 @@ export default function DraggableSwatch({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [position, containerRef, updateColor, onDragStart, onDrag, onDragEnd]
+    [
+      position,
+      containerRef,
+      updateColor,
+      updateZoomEffect,
+      onDragStart,
+      onDragEnd,
+    ]
   );
 
   return (
     <>
-      <div
-        ref={swatchRef}
-        className={`absolute w-6 h-6 border-4 border-white rounded-full cursor-grab shadow-lg z-10 transition-transform duration-200 ${
-          isDragging ? "cursor-grabbing scale-110" : "hover:scale-125"
-        }`}
-        style={{
-          backgroundColor: color,
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-        }}
-        onMouseDown={handleMouseDown}
-      />
+      {isDragging ? (
+        // Zoom picker mode when dragging
+        <div
+          ref={zoomRef}
+          className="absolute w-36 h-36 border-4 border-white rounded-full pointer-events-none z-20 overflow-hidden"
+          style={{
+            left: `${position.x - 60}px`, // Center the zoom picker on the swatch position
+            top: `${position.y - 60}px`,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+          }}
+        >
+          {/* Crosshair */}
+          <div
+            className="absolute border-2 border-white rounded-sm"
+            style={{
+              top: "50%",
+              left: "50%",
+              width: "20px",
+              height: "20px",
+              marginLeft: "-10px",
+              marginTop: "-10px",
+              boxShadow: "0 0 4px rgba(0,0,0,0.5)",
+            }}
+          />
+        </div>
+      ) : (
+        // Normal swatch mode when not dragging
+        <div
+          className="absolute w-6 h-6 border-4 border-white rounded-full cursor-grab shadow-lg z-10 transition-transform duration-200 hover:scale-125"
+          style={{
+            backgroundColor: color,
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          }}
+          onMouseDown={handleMouseDown}
+        />
+      )}
       <canvas ref={canvasRef} className="hidden" />
     </>
   );

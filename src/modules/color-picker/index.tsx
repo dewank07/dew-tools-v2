@@ -18,20 +18,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import PaletteCard from "./components/palette-card";
-import DraggableSwatch from "./components/DraggableSwatch";
-import ZoomPicker from "./components/ZoomPicker";
+import DraggableSwatch from "./components/draggable-swatch";
 
 const ColorPicker = () => {
   const [image, setImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("image");
   const [swatchColors, setSwatchColors] = useState<string[]>(["", "", "", ""]);
-  const [_isDragging, setIsDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [zoomPicker, setZoomPicker] = useState({
-    visible: false,
-    position: { x: 0, y: 0 },
-    center: { x: 0, y: 0 },
-  });
 
   const imageRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -55,24 +49,13 @@ const ColorPicker = () => {
     setImageLoaded(true);
   };
 
-  const handleSwatchColorChange = useCallback((id: number, color: string) => {
+  const handleColorChange = useCallback((index: number, color: string) => {
     setSwatchColors((prev) => {
       const newColors = [...prev];
-      newColors[id] = color;
+      newColors[index] = color;
       return newColors;
     });
   }, []);
-
-  const handlePaletteColorChange = useCallback(
-    (index: number, newColor: string) => {
-      setSwatchColors((prev) => {
-        const newColors = [...prev];
-        newColors[index] = newColor;
-        return newColors;
-      });
-    },
-    []
-  );
 
   const handleDeletePaletteColor = useCallback((index: number) => {
     setSwatchColors((prev) => {
@@ -119,60 +102,18 @@ const ColorPicker = () => {
                       id={index}
                       initialColor={color}
                       initialPosition={initialSwatchPositions[index]}
-                      onColorChange={handleSwatchColorChange}
+                      onColorChange={handleColorChange}
                       imageRef={imageRef}
                       containerRef={containerRef}
                       imageLoaded={imageLoaded}
-                      onDragStart={(position) => {
+                      onDragStart={() => {
                         setIsDragging(true);
-                        setZoomPicker({
-                          visible: true,
-                          position: {
-                            x: position.x + 60,
-                            y: position.y - 75,
-                          },
-                          center: { x: position.x + 12, y: position.y + 12 },
-                        });
-                      }}
-                      onDrag={(position) => {
-                        const containerRect =
-                          containerRef.current?.getBoundingClientRect();
-                        if (containerRect) {
-                          let zoomX = position.x + 60;
-                          let zoomY = position.y - 75;
-
-                          // Keep zoom picker within bounds
-                          if (zoomX + 150 > containerRect.width)
-                            zoomX = position.x - 210;
-                          if (zoomY < 0) zoomY = position.y + 60;
-
-                          setZoomPicker({
-                            visible: true,
-                            position: { x: zoomX, y: zoomY },
-                            center: {
-                              x: position.x + 12,
-                              y: position.y + 12,
-                            },
-                          });
-                        }
                       }}
                       onDragEnd={() => {
                         setIsDragging(false);
-                        setZoomPicker((prev) => ({
-                          ...prev,
-                          visible: false,
-                        }));
                       }}
                     />
                   ))}
-
-                  {/* Zoom Picker */}
-                  <ZoomPicker
-                    isVisible={zoomPicker.visible}
-                    position={zoomPicker.position}
-                    imageRef={imageRef}
-                    zoomCenter={zoomPicker.center}
-                  />
                 </div>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-3">
@@ -242,7 +183,7 @@ const ColorPicker = () => {
         {image && (
           <PaletteCard
             colors={swatchColors}
-            onColorChange={handlePaletteColorChange}
+            onColorChange={handleColorChange}
             onDeleteColor={handleDeletePaletteColor}
           />
         )}
