@@ -392,6 +392,7 @@ export default function DraggableSwatch({
     ]
   );
 
+
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       e.preventDefault();
@@ -481,6 +482,7 @@ export default function DraggableSwatch({
     ]
   );
 
+
   return (
     <>
       {isDragging ? (
@@ -526,7 +528,9 @@ export default function DraggableSwatch({
             boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
           }}
           onMouseDown={handleMouseDown}
+
           onTouchStart={handleTouchStart}
+
         />
       )}
       <canvas ref={canvasRef} className="hidden" />
