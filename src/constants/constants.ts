@@ -12,6 +12,7 @@ import {
   LogOut,
   PlusCircle,
   MessagesSquare,
+  Palette,
 } from "lucide-react";
 
 export const data = {
@@ -99,6 +100,11 @@ export const data = {
       name: "Regex Builder",
       url: "/dashboard/regex-builder",
       icon: Code,
+    },
+    {
+      name: "Color Picker",
+      url: "/dashboard/color-picker",
+      icon: Palette,
     },
     {
       name: "Request New Tool",

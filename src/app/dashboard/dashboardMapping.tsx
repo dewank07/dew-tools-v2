@@ -5,6 +5,7 @@ import TextComparison from "@/modules/text-comparison";
 import CommitMessageGenerator from "@/modules/commit-message-generator";
 import JsonVisualizer from "@/modules/json-visualizer";
 import RegexBuilder from "@/modules/regex-builder";
+import ColorPicker from "@/modules/color-picker";
 
 // Define the mapping of slugs to components
 interface DashboardComponentMapping {
@@ -51,6 +52,11 @@ export const dashboardComponents: DashboardComponentMapping = {
     component: RegexBuilder,
     title: "Regex Builder",
     description: "Build and test regular expressions with live preview",
+  },
+  "color-picker": {
+    component: ColorPicker,
+    title: "Color Picker",
+    description: "Pick a color and get the hex code",
   },
 };
 
