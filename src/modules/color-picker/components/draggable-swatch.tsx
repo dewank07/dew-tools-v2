@@ -392,6 +392,95 @@ export default function DraggableSwatch({
     ]
   );
 
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
+
+      const touch = e.touches[0];
+      const startX = touch.clientX;
+      const startY = touch.clientY;
+      const startLeft = position.x;
+      const startTop = position.y;
+
+      // Initialize zoom effect for current position
+      updateZoomEffect(position.x + 12, position.y + 12);
+
+      // Notify parent of drag start
+      onDragStart?.();
+
+      let animationId: number | null = null;
+
+      const handleTouchMove = (e: TouchEvent) => {
+        e.preventDefault(); // Prevent scrolling while dragging
+        if (!containerRect) return;
+
+        // Cancel previous animation frame to throttle updates
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+
+        animationId = requestAnimationFrame(() => {
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - startX;
+          const deltaY = touch.clientY - startY;
+
+          let newLeft = startLeft + deltaX;
+          let newTop = startTop + deltaY;
+
+          // Keep swatch within image bounds (24px is swatch size)
+          newLeft = Math.max(0, Math.min(newLeft, containerRect.width - 24));
+          newTop = Math.max(0, Math.min(newTop, containerRect.height - 24));
+
+          const newPosition = { x: newLeft, y: newTop };
+          setPosition(newPosition);
+
+          // Update color at new position (center of swatch)
+          updateColor(newLeft + 12, newTop + 12);
+
+          // Update zoom effect
+          updateZoomEffect(newLeft + 12, newTop + 12);
+        });
+      };
+
+      const handleTouchEnd = () => {
+        // Clean up animation frames
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+        if (zoomUpdateRef.current) {
+          cancelAnimationFrame(zoomUpdateRef.current);
+          zoomUpdateRef.current = null;
+        }
+        if (colorUpdateRef.current) {
+          cancelAnimationFrame(colorUpdateRef.current);
+          colorUpdateRef.current = null;
+        }
+
+        setIsDragging(false);
+        onDragEnd?.();
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
+      };
+
+      document.addEventListener("touchmove", handleTouchMove, {
+        passive: false,
+      });
+      document.addEventListener("touchend", handleTouchEnd);
+    },
+    [
+      position,
+      containerRef,
+      updateColor,
+      updateZoomEffect,
+      onDragStart,
+      onDragEnd,
+    ]
+  );
+
   return (
     <>
       {isDragging ? (
@@ -437,6 +526,7 @@ export default function DraggableSwatch({
             boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
           }}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         />
       )}
       <canvas ref={canvasRef} className="hidden" />
